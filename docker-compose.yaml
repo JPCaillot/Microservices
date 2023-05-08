@@ -1,0 +1,64 @@
+version: '3.7'
+
+services:  
+  currency-exchange: 
+    image: jpcaillot/mmv3-currency-exchange-service
+    mem_limit: 700m
+    ports:
+      - "8000:8000"
+    networks:
+      - currency-network
+    depends_on:
+      - naming-server
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka
+      #SPRING.ZIPKIN.BASEURL: http://zipkin-server:9411/ #SB2
+      MANAGEMENT.ZIPKIN.TRACING.ENDPOINT: http://zipkin-server:9411/api/v2/spans #SB3
+
+  currency-conversion: 
+    image: jpcaillot/mmv3-currency-conversion-service
+    mem_limit: 700m
+    ports:
+      - "8100:8100"
+    networks:
+      - currency-network
+    depends_on:
+      - naming-server
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka
+      #SPRING.ZIPKIN.BASEURL: http://zipkin-server:9411/ #SB2
+      MANAGEMENT.ZIPKIN.TRACING.ENDPOINT: http://zipkin-server:9411/api/v2/spans #SB3
+
+  api-gateway: 
+    image: jpcaillot/mmv3-api-gateway
+    mem_limit: 700m
+    ports:
+      - "8765:8765"
+    networks:
+      - currency-network
+    depends_on:
+      - naming-server
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka
+      #SPRING.ZIPKIN.BASEURL: http://zipkin-server:9411/ #SB2
+      MANAGEMENT.ZIPKIN.TRACING.ENDPOINT: http://zipkin-server:9411/api/v2/spans #SB3
+
+  naming-server: 
+    image: jpcaillot/mmv3-naming-server
+    mem_limit: 700m
+    ports:
+      - "8761:8761"
+    networks:
+      - currency-network
+
+  zipkin-server:
+    image: openzipkin/zipkin:2.23
+    mem_limit: 300m
+    ports:
+      - "9411:9411"
+    networks:
+      - currency-network
+    restart: always #Restart if there is a problem starting up
+    
+networks:
+  currency-network:
